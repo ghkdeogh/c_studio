@@ -36,15 +36,18 @@
     },
     {
       "id": "story-planning",
-      "description": "이야기 기획",
+      "description": "이야기 기획·스토리보드·콘티·대본·인물 기획",
       "match": {
         "tags": [
-          "story-planning"
+          "story-planning",
+          "storyboard"
         ]
       },
       "read_order": [
-        "craft/doctrine/production-cycle.md",
-        "craft/doctrine/feedback-cycle.md"
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md",
+        "craft/doctrine/production-cycle.md"
       ],
       "conditional_docs": []
     },
@@ -57,6 +60,9 @@
         ]
       },
       "read_order": [
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md",
         "library/prompts/README.md",
         "library/prompts/scene-planning.md"
       ],
@@ -71,6 +77,9 @@
         ]
       },
       "read_order": [
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md",
         "docs/runbooks/local-generation.md"
       ],
       "conditional_docs": []
@@ -84,6 +93,9 @@
         ]
       },
       "read_order": [
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md",
         "docs/runbooks/paid-generation.md"
       ],
       "conditional_docs": []
@@ -94,9 +106,16 @@
       "match": {
         "tags": [
           "resume-project"
+        ],
+        "path_globs": [
+          "productions/*"
         ]
       },
-      "read_order": [],
+      "read_order": [
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md"
+      ],
       "conditional_docs": [
         {
           "description": "지정 작품의 가까운 상태와 브리프",
@@ -117,6 +136,9 @@
         ]
       },
       "read_order": [
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md",
         "docs/runbooks/review-delivery.md"
       ],
       "conditional_docs": []

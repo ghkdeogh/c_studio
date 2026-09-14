@@ -32,7 +32,9 @@ class RouterTests(unittest.TestCase):
     def test_resume_order_and_scope(self):
         result = router.select(self.config, ['resume-project'], 'productions/_template/BRIEF.md')
         self.assertEqual([d['path'] for d in result['documents']],
-                         ['productions/_template/생성상태.md', 'productions/_template/BRIEF.md'])
+                         ['productions/AGENTS.md', 'docs/studio/project-contract.md',
+                          'craft/doctrine/feedback-cycle.md',
+                          'productions/_template/생성상태.md', 'productions/_template/BRIEF.md'])
         self.assertEqual(router.select(self.config, ['resume-project'])['status'], 'project-path-required')
         for target in ['productions', 'docs/agent', 'productions/missing']:
             with self.assertRaises(ValueError):
@@ -80,6 +82,37 @@ class RouterTests(unittest.TestCase):
         result = router.select(self.config, ['unknown'])
         self.assertEqual(result['status'], 'clarify-intent')
         self.assertEqual(result['documents'], [])
+
+    def test_creation_without_project_still_loads_studio_contract(self):
+        # Chat-first creation must reach the registration contract before a folder exists.
+        for tag in ['storyboard', 'story-planning', 'prompt-writing', 'local-run',
+                    'paid-generation', 'review-delivery']:
+            with self.subTest(tag=tag):
+                result = router.select(self.config, [tag])
+                self.assertEqual(result['status'], 'ok')
+                paths = [d['path'] for d in result['documents']]
+                self.assertEqual(paths[:2], ['productions/AGENTS.md', 'docs/studio/project-contract.md'])
+                self.assertEqual(paths[2], 'craft/doctrine/feedback-cycle.md')
+                self.assertFalse(result['warning'])
+
+    def test_existing_project_context_without_explicit_resume_tag(self):
+        # A storyboard or prompt edit must not silently omit the existing story/state.
+        for tag in ['storyboard', 'prompt-writing', 'review-delivery']:
+            with self.subTest(tag=tag):
+                result = router.select(self.config, [tag], 'productions/_template/BRIEF.md')
+                self.assertEqual(result['status'], 'ok')
+                paths = [d['path'] for d in result['documents']]
+                self.assertIn('resume-project', result['routes'])
+                self.assertIn('productions/_template/생성상태.md', paths)
+                self.assertIn('productions/_template/BRIEF.md', paths)
+                self.assertLess(paths.index('productions/_template/생성상태.md'),
+                                paths.index('productions/_template/BRIEF.md'))
+                self.assertEqual(paths.count('docs/studio/project-contract.md'), 1)
+                self.assertFalse(any(router.forbidden(p, self.config) for p in paths))
+
+    def test_repo_docs_without_project_stays_scoped(self):
+        result = router.select(self.config, ['repo-docs'])
+        self.assertEqual([d['path'] for d in result['documents']], ['docs/agent/README.md'])
 
 
 if __name__ == '__main__':

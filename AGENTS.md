@@ -10,6 +10,10 @@
 작업 폴더에서 `python -B _infra/doc-router/router.py --tags "repo-docs" --json`을 실행한다. 요청을 docs/agent/README.md의 작업 태그로 분류하고 repo-docs를 해당 태그로 바꾼다. 작품을 지정한 요청은 `--path "productions/종류/작품"`을 추가한다. 선택된 문서만 순서대로 읽는다. 선택 실패 시 범위를 좁히고 전체 Markdown을 읽지 않는다. 라우터 사용이 불가능하면 docs/agent/README.md의 수동 표를 사용한다.
 라우터 변경 후 `python -B _infra/doc-router/router.py --check`와 `python -B _infra/doc-router/tests/test_router.py`로 검증한다.
 
+## 프로젝트 기반 대화
+이 작업 폴더의 대화는 CreativeStudio 프로젝트를 기본 맥락으로 삼는다. 작품에 관한 답변·제안 전에 현재 대화에서 지정하거나 이어오던 작품을 식별하고 해당 정본을 확인한다. 후속 요청에서도 같은 작품 맥락을 유지하며, 다른 작품으로 전환하라는 요청 없이 새 작품으로 바꾸지 않는다. 대상이 불명확하면 관련 이름·project.json만 좁혀 검색하고, 여러 후보가 남으면 작품만 짧게 확인한다. 수정 시각이나 브라우저에 열린 작품만으로 대상을 확정하지 않는다.
+작품 기획·스토리보드·콘티·대본·프롬프트·컷·인물·이미지·영상의 생성·수정 요청은 [작품 제작 지침](productions/AGENTS.md)을 진입점으로 삼는다. 사용자가 매번 “제작실에도 반영”이라고 덧붙일 필요가 없도록 로컬 작품 반영과 검증을 기본 완료 범위에 포함한다. 정확한 요청 구분·저장·완료 기준은 [프로젝트 규약](docs/studio/project-contract.md#대화-요청의-기본-처리와-완료-기준)을 따른다. 일반 질문·의견 교환은 관련 프로젝트 맥락으로 답하되 자동으로 작품을 수정하지 않는다. “대화로만”, “저장하지 마”, “초안만 보여줘” 등 현재 요청의 제한을 우선한다.
+
 ## 사실과 완료
 실제 결과를 확인한 범위만 완료라고 보고한다. 이야기 확정은 작품 BRIEF.md, 현재 진행점은 생성상태.md, 결과 판정은 작품 renders.md가 소유한다. 모델 공통 원칙은 craft/doctrine, 모델 문법은 craft/playbooks, 정확한 워크플로 설정은 library/workflows, 실행 절차는 docs/runbooks가 소유한다. 다른 문서는 정본을 링크한다.
 

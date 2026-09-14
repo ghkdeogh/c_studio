@@ -1,6 +1,9 @@
 import base64
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import threading
 import unittest
@@ -86,6 +89,29 @@ class ProductionAssetsTest(unittest.TestCase):
         result=self.request('/api/project?id=productions/video/second')
         self.assertEqual(result['characters']['items'],[])
         self.assertEqual(result['feedback']['items'],[])
+
+
+class ProductionAssetsCLITest(unittest.TestCase):
+    def test_lessons_outputs_utf8_under_legacy_windows_encoding(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            folder = project_store.create(root, 'source', 'Source \u2014 film')
+            title = 'Camera \u2013 timing \U0001f3ac'
+            assets.upsert(folder, 'feedback', {
+                'id': 'camera', 'title': title, 'observation': 'Observed',
+                'action': 'Review timing', 'scope': 'reusable',
+            })
+            before = (folder / 'feedback.json').read_bytes()
+            result = subprocess.run(
+                [sys.executable, '-B', str(Path(assets.__file__)), 'lessons', str(root)],
+                env={**os.environ, 'PYTHONIOENCODING': 'cp949', 'PYTHONUTF8': '0'},
+                capture_output=True, timeout=15,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode('utf-8', errors='replace'))
+            rows = json.loads(result.stdout.decode('utf-8'))
+            self.assertEqual(rows[0]['title'], title)
+            self.assertEqual(rows[0]['project_name'], 'Source \u2014 film')
+            self.assertEqual((folder / 'feedback.json').read_bytes(), before)
 
 
 if __name__ == '__main__':

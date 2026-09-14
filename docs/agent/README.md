@@ -5,12 +5,16 @@
 | 요청 | 태그 | 수동 진입 문서(작업 폴더 기준) |
 |---|---|---|
 | 문서 구조 수정 | repo-docs | docs/agent/README.md |
-| 이야기 기획 | story-planning | craft/doctrine/production-cycle.md |
+| 이야기 기획·스토리보드·콘티·대본·인물 기획 | story-planning (별칭 storyboard) | productions/AGENTS.md → docs/studio/project-contract.md → craft/doctrine/production-cycle.md |
 | 프롬프트 작성 | prompt-writing | library/prompts/README.md |
 | 로컬 실행 | local-run | docs/runbooks/local-generation.md |
 | 유료 생성 | paid-generation | docs/runbooks/paid-generation.md |
 | 작품 이어가기 | resume-project | 지정 작품에서 가장 가까운 생성상태.md → BRIEF.md |
 | 결과 검수·전달 | review-delivery | docs/runbooks/review-delivery.md |
+
+repo-docs를 제외한 모든 제작 라우트는 `productions/AGENTS.md` → `docs/studio/project-contract.md` → `craft/doctrine/feedback-cycle.md`를 먼저 선택한다. 수동 선택에서도 이 세 문서를 표의 작업 문서 앞에 읽는다. 채팅에서 시작한 요청도 동일하며 “제작실”이라는 단어가 없어도 적용한다. 구체적인 저장·완료 기준은 프로젝트 규약, 전작 피드백의 활용 절차는 feedback-cycle이 소유한다.
+
+기존 작품의 경로를 알면 모든 작업 태그에 `--path`를 함께 준다. `productions/*` 경로는 resume-project도 자동 선택하여 가까운 생성상태.md → BRIEF.md를 포함한다. 새 작품은 경로 없이 제작 라우트를 읽고 규약에 따라 생성한 뒤 작품 맥락을 확인한다. 작품별 AGENTS.md와 project.json, .studio/state.json, 관련 대본·자산은 규약에 따라 좁혀 읽는다. 대화에서 이어오던 작품을 매번 다시 묻지 않는다.
 
 ## 사용법
 작업 폴더에서 실행한다.

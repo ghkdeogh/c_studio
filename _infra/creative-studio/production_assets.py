@@ -4,6 +4,7 @@ import argparse
 import base64
 import json
 import re
+import sys
 import time
 import uuid
 
@@ -139,6 +140,9 @@ def reusable(projects):
 
 
 def main():
+    # JSON is consumed by agents and pipes; Windows' legacy console codec cannot
+    # represent every character in user-authored feedback (e.g. en dashes).
+    sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description='Character sheets and feedback registry')
     parser.add_argument('command', choices=['list', 'upsert', 'lessons'])
     parser.add_argument('path', type=Path)
