@@ -90,6 +90,22 @@ class ProductionAssetsTest(unittest.TestCase):
         self.assertEqual(result['characters']['items'],[])
         self.assertEqual(result['feedback']['items'],[])
 
+    def test_lesson_selection_and_application_api(self):
+        assets.upsert(self.p, 'feedback', {'id':'camera','title':'카메라 경로','observation':'검수','action':'카메라를 천천히 이동','scope':'reusable'})
+        selected = self.request('/api/lessons?project=productions/video/second')
+        row = selected['items'][0]
+        self.assertEqual(row['project_name'], 'First')
+        payload = {'project':'productions/video/second','ref':row['ref'],'source_hash':row['source_hash'],'revision':0,'stage':'planned','application':'공간 공개 장면에 적용','cuts':[]}
+        with self.assertRaises(urllib.error.HTTPError):
+            self.request('/api/lesson-plan',payload,token=False)
+        saved = self.request('/api/lesson-plan',payload)
+        self.assertEqual(saved['revision'],1)
+        with self.assertRaises(urllib.error.HTTPError):
+            self.request('/api/lesson-plan',payload)
+        catalog = self.request('/api/project?id=productions/video/second')
+        self.assertEqual(catalog['lesson_selection']['plan']['items'][0]['stage'],'planned')
+        self.assertEqual(assets.load(self.other,'feedback')['items'],[])
+
 
 class ProductionAssetsCLITest(unittest.TestCase):
     def test_lessons_outputs_utf8_under_legacy_windows_encoding(self):
@@ -103,7 +119,7 @@ class ProductionAssetsCLITest(unittest.TestCase):
             })
             before = (folder / 'feedback.json').read_bytes()
             result = subprocess.run(
-                [sys.executable, '-B', str(Path(assets.__file__)), 'lessons', str(root)],
+                [sys.executable, '-B', str(Path(assets.__file__)), 'lessons', str(root), '--raw'],
                 env={**os.environ, 'PYTHONIOENCODING': 'cp949', 'PYTHONUTF8': '0'},
                 capture_output=True, timeout=15,
             )

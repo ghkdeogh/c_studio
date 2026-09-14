@@ -1,5 +1,6 @@
 """Project-owned character references and feedback. Never writes .studio state."""
 from pathlib import Path
+from contextlib import contextmanager
 import argparse
 import base64
 import json
@@ -88,10 +89,32 @@ def clean(folder, kind, item):
         if item.get('retrospective') is not None:
             from youtube_analytics import validate_retrospective
             row['retrospective'] = validate_retrospective(folder, item['retrospective'])
+        if item.get('learning') is not None:
+            from lesson_memory import clean_learning
+            row['learning'] = clean_learning(item['learning'])
     return row
 
 
+@contextmanager
+def write_lock(folder, kind):
+    path = inside(folder, '.' + kind + '.lock')
+    try:
+        stream = path.open('x', encoding='utf-8')
+    except FileExistsError:
+        raise ValueError('다른 작업에서 기록을 저장 중입니다. 잠시 후 다시 시도해 주세요.') from None
+    try:
+        yield
+    finally:
+        stream.close()
+        path.unlink()
+
+
 def upsert(folder, kind, item, revision=None):
+    with write_lock(folder, kind):
+        return _upsert(folder, kind, item, revision)
+
+
+def _upsert(folder, kind, item, revision=None):
     current = load(folder, kind)
     if revision is not None and revision != current['revision']:
         raise ValueError('다른 곳에서 기록이 변경됐어요. 입력 내용을 복사해 두고 다시 열어 주세요.')
@@ -99,6 +122,11 @@ def upsert(folder, kind, item, revision=None):
     row = clean(folder, kind, {**(prior or {}), **item})
     row['created_at'] = prior.get('created_at', time.time()) if prior else time.time()
     row['updated_at'] = time.time()
+    if kind == 'feedback' and (prior or {}).get('learning') != row.get('learning'):
+        current.setdefault('learning_history', []).append({
+            'revision': current['revision'] + 1, 'id': row['id'], 'at': row['updated_at'],
+            'before': (prior or {}).get('learning'), 'after': row.get('learning'),
+        })
     if prior:
         current['items'][current['items'].index(prior)] = row
     else:
@@ -106,6 +134,17 @@ def upsert(folder, kind, item, revision=None):
     current['revision'] += 1
     atomic(inside(folder, FILES[kind]), current)
     return current
+
+
+def restore_learning(folder, ident, history_revision, revision):
+    with write_lock(folder, 'feedback'):
+        current = load(folder, 'feedback')
+        if revision != current['revision']:
+            raise ValueError('원칙이 변경됐어요. 최신 기록을 확인해 주세요.')
+        event = next((h for h in current.get('learning_history', []) if h['id'] == ident and h['revision'] == history_revision), None)
+        if event is None:
+            raise ValueError('복원할 원칙 변경을 찾을 수 없습니다.')
+        return _upsert(folder, 'feedback', {'id': ident, 'learning': event['before']}, revision)
 
 
 def upload_character(folder, data):
@@ -144,12 +183,26 @@ def main():
     # represent every character in user-authored feedback (e.g. en dashes).
     sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description='Character sheets and feedback registry')
-    parser.add_argument('command', choices=['list', 'upsert', 'lessons'])
+    parser.add_argument('command', choices=['list', 'upsert', 'lessons', 'lesson-plan', 'lesson-rule'])
     parser.add_argument('path', type=Path)
     parser.add_argument('--kind', choices=FILES)
     parser.add_argument('--file', type=Path)
+    parser.add_argument('--project', help='작품 상대 경로')
+    parser.add_argument('--query', default='')
+    parser.add_argument('--stage', choices=['planning', 'generation', 'review'], default='planning')
+    parser.add_argument('--model', default='')
+    parser.add_argument('--limit', type=int, default=6)
+    parser.add_argument('--offset', type=int, default=0)
+    parser.add_argument('--browse', action='store_true', help='조건 확인이 필요한 후보도 페이지별 조회')
+    parser.add_argument('--raw', action='store_true', help='호환용 전체 원본 목록; 기본 작업에서는 사용하지 않음')
+    parser.add_argument('--revision', type=int)
     args = parser.parse_args()
     if args.command == 'lessons':
+        if not args.raw:
+            from lesson_memory import select
+            result = select(args.path, args.project, args.query, args.stage, args.model, args.limit, args.offset, args.browse)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return
         folders = sorted((args.path / 'productions').glob('*/*/BRIEF.md'))
         records = []
         for brief in folders:
@@ -157,13 +210,26 @@ def main():
             info = json.loads((folder / 'project.json').read_text(encoding='utf-8-sig')) if (folder / 'project.json').exists() else {}
             records.append((folder.relative_to(args.path).as_posix(), info.get('title', folder.name), folder))
         result = reusable(records)
+    elif args.command == 'lesson-plan':
+        from lesson_memory import select, save_plan
+        if not args.project:
+            parser.error('--project is required')
+        result = save_plan(args.path, args.project, json.loads(args.file.read_text(encoding='utf-8-sig'))) if args.file else select(args.path, args.project)['plan']
+    elif args.command == 'lesson-rule':
+        if not args.file or args.revision is None:
+            parser.error('--file and --revision are required')
+        patch = json.loads(args.file.read_text(encoding='utf-8-sig'))
+        if patch.get('operation') == 'revert':
+            result = restore_learning(args.path, patch['id'], patch['history_revision'], args.revision)
+        else:
+            result = upsert(args.path, 'feedback', {'id': patch['id'], 'learning': patch['learning']}, args.revision)
     else:
         if not args.kind:
             parser.error('--kind is required')
         if args.command == 'upsert':
             if not args.file:
                 parser.error('--file is required')
-            result = upsert(args.path, args.kind, json.loads(args.file.read_text(encoding='utf-8-sig')))
+            result = upsert(args.path, args.kind, json.loads(args.file.read_text(encoding='utf-8-sig')), args.revision)
         else:
             result = load(args.path, args.kind)
     print(json.dumps(result, ensure_ascii=False, indent=2))

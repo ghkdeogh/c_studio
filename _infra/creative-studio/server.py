@@ -7,6 +7,7 @@ from project_store import validate
 from story_view import load_story
 import media_engine
 import production_assets
+import lesson_memory
 import youtube_analytics
 import youtube_auth
 import html
@@ -116,7 +117,8 @@ def catalog(pid):
         snapshot['source_file_url']=url(pid,source) if unchanged else None
         snapshot['source_warning']='등록한 원본이 없거나 변경되었습니다. 구간과 영상을 연결하기 전에 원본을 확인해 주세요.' if source and not unchanged else ''
     result['youtube_connection']=youtube_auth.status()
-    result['lessons']=production_assets.reusable([(r['id'],r['name'],project(r['id'])) for r in projects()])
+    result['lesson_selection']=lesson_memory.select(ROOT,pid) if pid else None
+    result['lessons']=result['lesson_selection']['items'] if pid else []
     guide=HERE.parents[1]/'library/prompts/scene-planning.md'
     result['prompt_guide']=guide.read_text(encoding='utf-8-sig') if guide.is_file() else ''
     result['revision']=hashlib.sha256(json.dumps(result,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
@@ -229,6 +231,10 @@ class Handler(BaseHTTPRequestHandler):
             if q.path=='/api/project':
                 with LOCK: result=catalog(params['id'][0])
                 return self.json(result)
+            if q.path=='/api/lessons':
+                with LOCK:
+                    result=lesson_memory.select(ROOT,params.get('project',[None])[0],params.get('query',[''])[0],params.get('stage',['planning'])[0],params.get('model',[''])[0],int(params.get('limit',['6'])[0]),int(params.get('offset',['0'])[0]),params.get('browse',['0'])[0]=='1')
+                return self.json(result)
             if q.path in ('/api/frames','/api/frame-image'):
                 p=project(params['project'][0]);f=within(p,params['path'][0])
                 if f.suffix.lower()!='.mp4':raise ValueError('MP4 영상을 선택해 주세요.')
@@ -238,7 +244,7 @@ class Handler(BaseHTTPRequestHandler):
                 with LOCK: f=within(project(params['project'][0]),params['path'][0])
                 if f.suffix.lower() not in IMAGES|{'.mp4','.md','.mp3','.wav','.json'}: raise ValueError('지원하지 않는 파일 형식입니다.')
                 return self.file(f)
-            if q.path in ('/','/app.js','/story.js','/review.js','/youtube.js','/style.css'): return self.file(HERE/'web'/('index.html' if q.path=='/' else q.path[1:]))
+            if q.path in ('/','/app.js','/story.js','/review.js','/youtube.js','/lessons.js','/style.css'): return self.file(HERE/'web'/('index.html' if q.path=='/' else q.path[1:]))
             self.json({'error':'Not found'},404)
         except (ValueError,KeyError,OSError) as e: self.json({'error':str(e)},400)
     def do_POST(self):
@@ -264,6 +270,7 @@ class Handler(BaseHTTPRequestHandler):
                 elif self.path=='/api/timeline':result=save_timeline(data)
                 elif self.path=='/api/export':result=export_project(data)
                 elif self.path=='/api/open-output-folder':result=open_output_folder(data)
+                elif self.path=='/api/lesson-plan':result=lesson_memory.save_plan(ROOT,data['project'],data)
                 elif self.path=='/api/youtube/configure':result=youtube_auth.configure(data.get('document'))
                 elif self.path=='/api/youtube/oauth/start':result=youtube_auth.start(self.server.server_port)
                 elif self.path=='/api/youtube/link':result=youtube_analytics.link(project(data['project']),data['item'],data.get('revision'))

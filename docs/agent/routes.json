@@ -18,7 +18,8 @@
     "local-run": "local-run",
     "paid-generation": "paid-generation",
     "resume-project": "resume-project",
-    "review-delivery": "review-delivery"
+    "review-delivery": "review-delivery",
+    "feedback-learning": "feedback-learning"
   },
   "routes": [
     {
@@ -140,6 +141,22 @@
         "docs/studio/project-contract.md",
         "craft/doctrine/feedback-cycle.md",
         "docs/runbooks/review-delivery.md"
+      ],
+      "conditional_docs": []
+    },
+    {
+      "id": "feedback-learning",
+      "description": "피드백 선별·원칙 정리·적용 이력",
+      "match": {
+        "tags": [
+          "feedback-learning"
+        ]
+      },
+      "read_order": [
+        "productions/AGENTS.md",
+        "docs/studio/project-contract.md",
+        "craft/doctrine/feedback-cycle.md",
+        "docs/studio/lesson-memory.md"
       ],
       "conditional_docs": []
     }

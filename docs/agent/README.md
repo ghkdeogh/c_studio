@@ -11,6 +11,7 @@
 | 유료 생성 | paid-generation | docs/runbooks/paid-generation.md |
 | 작품 이어가기 | resume-project | 지정 작품에서 가장 가까운 생성상태.md → BRIEF.md |
 | 결과 검수·전달 | review-delivery | docs/runbooks/review-delivery.md |
+| 피드백 선별·원칙 정리·적용 기록·복원 | feedback-learning | craft/doctrine/feedback-cycle.md → docs/studio/lesson-memory.md |
 
 repo-docs를 제외한 모든 제작 라우트는 `productions/AGENTS.md` → `docs/studio/project-contract.md` → `craft/doctrine/feedback-cycle.md`를 먼저 선택한다. 수동 선택에서도 이 세 문서를 표의 작업 문서 앞에 읽는다. 채팅에서 시작한 요청도 동일하며 “제작실”이라는 단어가 없어도 적용한다. 구체적인 저장·완료 기준은 프로젝트 규약, 전작 피드백의 활용 절차는 feedback-cycle이 소유한다.
 

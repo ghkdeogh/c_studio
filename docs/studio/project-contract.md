@@ -136,6 +136,8 @@ python -B _infra/creative-studio/project_store.py adopt productions/video/legacy
 
 ## 인물시트와 제작 피드백
 
+피드백이 쌓일 때의 선별·원칙 정리·적용 이력은 [피드백 선별과 적용 기록](lesson-memory.md)이 소유한다. 원본 feedback.json과 선택적 learning은 전작 경험의 정본, lesson-plan.json은 이번 작품의 적용·검수 기록이다. 기존 원문을 새 작품으로 복제하지 않는다.
+
 모든 프로젝트에 인물·시트 및 피드백·다음 작품 화면을 제공한다. 기존 프로젝트에 파일이 없으면 빈 상태로 표시하며 새 프로젝트 CLI는 characters.json과 feedback.json을 자동 생성한다. project.json과 .studio의 미디어·구간·메모는 변경하지 않는다.
 
 characters.json: schema_version=1, revision, items. 인물별 id/name/role/description/appearance/wardrobe/performance/continuity/source/status, images 배열. status는 draft/reference/approved. 이미지는 작품 내부의 실제 파일 path, 설명 label, 종류 kind(sheet/reference/detail)로 등록한다. 캐릭터 설명과 연결 파일의 정본이며 확정된 서사·관계는 BRIEF.md를 참조한다. 이미지 추가는 별도 파일로 보존한다.

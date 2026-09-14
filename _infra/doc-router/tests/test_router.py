@@ -114,6 +114,12 @@ class RouterTests(unittest.TestCase):
         result = router.select(self.config, ['repo-docs'])
         self.assertEqual([d['path'] for d in result['documents']], ['docs/agent/README.md'])
 
+    def test_feedback_learning_routes_to_application_contract(self):
+        result = router.select(self.config, ['feedback-learning'])
+        self.assertEqual(result['status'], 'ok')
+        self.assertIn('docs/studio/lesson-memory.md', [d['path'] for d in result['documents']])
+        self.assertFalse(result['warning'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
