@@ -1,0 +1,179 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "root_agent_max_bytes": {
+          "const": 12288
+        },
+        "initial_route_max_bytes": {
+          "const": 81920
+        },
+        "initial_route_warning_ratio": {
+          "const": 0.75
+        }
+      },
+      "required": [
+        "root_agent_max_bytes",
+        "initial_route_max_bytes",
+        "initial_route_warning_ratio"
+      ],
+      "additionalProperties": false
+    },
+    "forbidden_default": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\/$).+$"
+      },
+      "uniqueItems": true
+    },
+    "representative_tags": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      },
+      "minProperties": 7
+    },
+    "routes": {
+      "type": "array",
+      "minItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "match": {
+            "type": "object",
+            "properties": {
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              },
+              "path_globs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\/$).+$"
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              }
+            },
+            "required": [],
+            "additionalProperties": false,
+            "minProperties": 1
+          },
+          "read_order": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\/$).+$"
+            },
+            "uniqueItems": true
+          },
+          "conditional_docs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "when": {
+                  "const": "path-provided"
+                },
+                "read_order": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\/$).+$"
+                  },
+                  "uniqueItems": true,
+                  "minItems": 1
+                },
+                "nearest": {
+                  "const": [
+                    "생성상태.md",
+                    "BRIEF.md"
+                  ]
+                }
+              },
+              "required": [
+                "description",
+                "when"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "required": [
+                    "read_order"
+                  ],
+                  "not": {
+                    "required": [
+                      "nearest"
+                    ]
+                  }
+                },
+                {
+                  "required": [
+                    "nearest"
+                  ],
+                  "not": {
+                    "required": [
+                      "read_order"
+                    ]
+                  }
+                }
+              ]
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "match",
+          "read_order",
+          "conditional_docs"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "limits",
+    "forbidden_default",
+    "representative_tags",
+    "routes"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/creator-doc-router/routes.schema.json",
+  "title": "Creator document routes"
+}

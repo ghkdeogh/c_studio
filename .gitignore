@@ -1,0 +1,52 @@
+# Only shared instructions and empty templates belong in productions.
+/productions/*
+!/productions/AGENTS.md
+!/productions/_template/
+/productions/_template/*
+!/productions/_template/BRIEF.md
+!/productions/_template/생성상태.md
+!/productions/_template/renders.md
+
+# Personal assets and local history
+/library/channels/
+/docs/studio/import-manifest.json
+/docs/studio/setup-status.json
+/tmp/
+/_scratch/
+**/.studio/
+**/qa/
+**/backups/
+**/logs/
+*.log
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.zip
+
+# Credentials and machine settings
+.env
+.env.*
+!.env.example
+*client_secret*.json
+*credentials*.json
+*oauth*.bin
+*.pem
+*.key
+.codex/
+.agent-system.json
+
+# Dependencies and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+package-lock.json
+.pytest_cache/
+.DS_Store
+Thumbs.db

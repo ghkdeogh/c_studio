@@ -1,0 +1,15 @@
+let activeView='board';
+function documentHtml(text){return text.split('\n').map(line=>{if(/^#{1,3} /.test(line))return '<h3>'+esc(line.replace(/^#+ /,''))+'</h3>';if(line.startsWith('- '))return '<p class="bullet">'+esc(line.slice(2))+'</p>';return line?'<p>'+esc(line)+'</p>':'';}).join('');}
+function storyHtml(c){return c.story?.length?c.story.map(s=>`<article class="scenario"><p class="hint">촬영 대본 ${esc(s.id)} · 목표 ${esc(s.target)} / 현재 영상 ${c.duration?.toFixed(2)??'미등록'}초</p><dl><dt>대사 · 말투</dt><dd>${esc(s.dialogue)}</dd><dt>동작 · 사건</dt><dd>${esc(s.action)}</dd><dt>카메라 · 연결</dt><dd>${esc(s.camera)}</dd></dl></article>`).join(''):'<p class="hint">컷 시나리오 미등록. 촬영 대본에 같은 컷 ID로 내용을 기록해 주세요.</p>';}
+function stamp(t){return t==null?'미등록':`${Math.floor(t/60)}:${(t%60).toFixed(1).padStart(4,'0')}`;}
+function frame(c,end){if(!c)return '<p>첫 컷입니다.</p>';return `<figure><figcaption>${esc(c.name)} · ${end?'끝':'시작'} 화면</figcaption>${end&&c.end?`<img src="${esc(c.end)}" alt="확보된 실제 끝 프레임">`:c.video?`<video muted playsinline preload="auto" data-frame="${end?'end':'start'}" src="${esc(c.video)}"></video><small>영상에서 표시 · ${end?'마지막 프레임 부근':'시작 화면'}</small>`:'<p>영상 미생성</p>'}</figure>`;}
+function seekFrames(container){container.querySelectorAll('video[data-frame]').forEach(v=>{v.addEventListener('loadedmetadata',()=>{v.currentTime=v.dataset.frame==='end'?Math.max(0,v.duration-1/24):0.001;},{once:true});v.addEventListener('error',()=>{v.insertAdjacentHTML('afterend','<p>화면을 불러오지 못했습니다. 컷 원본으로 확인해 주세요.</p>');},{once:true});});}
+function renderStoryViews(){
+ $('#brief-content').innerHTML=documentHtml(data.story?.brief||'BRIEF.md에 주제와 줄거리를 작성해 주세요.');$('#script-content').textContent=data.story?.script||'촬영 대본 미등록';
+ $('#timeline').innerHTML=data.cuts.map((c,i)=>`<div class="timeline-row"><button data-seam="${i}"><b>${esc(c.id)}</b> ${esc(c.name)} <small>${stamp(c.start)} · ${c.duration?.toFixed(1)??'—'}초</small></button>${data.full&&c.start!=null?`<button data-jump="${c.start}">전체본에서 보기 ↗</button>`:''}</div>`).join('')||'<p>등록된 컷이 없습니다.</p>';
+ $('#timeline').querySelectorAll('[data-seam]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.seam);$('#seam').innerHTML='<h3>앞 컷 끝 → 이 컷 시작</h3><div class="frame-pair">'+frame(data.cuts[i-1],true)+frame(data.cuts[i],false)+'</div>'+storyHtml(data.cuts[i]);seekFrames($('#seam'));});
+ $('#timeline').querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>{const v=$('#full-player');v.src=data.full;v.onloadedmetadata=()=>{v.currentTime=Number(b.dataset.jump);v.onloadedmetadata=null;};$('#player-dialog').showModal();});
+ $('#seam').innerHTML='';
+}
+function renderCutStory(){const c=cut();$('#cut-story').innerHTML=storyHtml(c);$('#cut-frames').innerHTML=frame(c,false)+frame(c,true);seekFrames($('#cut-frames'));}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{activeView=b.dataset.view;['board','overview','continuity'].forEach(id=>$('#'+id).hidden=id!==activeView);document.querySelectorAll('[data-view]').forEach(x=>x.setAttribute('aria-pressed',x===b));});

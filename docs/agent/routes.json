@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "limits": {
+    "root_agent_max_bytes": 12288,
+    "initial_route_max_bytes": 81920,
+    "initial_route_warning_ratio": 0.75
+  },
+  "forbidden_default": [
+    "CONTEXT.md",
+    "renders.md",
+    "**/logs/**",
+    "logs/**"
+  ],
+  "representative_tags": {
+    "repo-docs": "repo-docs",
+    "story-planning": "story-planning",
+    "prompt-writing": "prompt-writing",
+    "local-run": "local-run",
+    "paid-generation": "paid-generation",
+    "resume-project": "resume-project",
+    "review-delivery": "review-delivery"
+  },
+  "routes": [
+    {
+      "id": "repo-docs",
+      "description": "문서 구조 수정",
+      "match": {
+        "tags": [
+          "repo-docs"
+        ]
+      },
+      "read_order": [
+        "docs/agent/README.md"
+      ],
+      "conditional_docs": []
+    },
+    {
+      "id": "story-planning",
+      "description": "이야기 기획",
+      "match": {
+        "tags": [
+          "story-planning"
+        ]
+      },
+      "read_order": [
+        "craft/doctrine/production-cycle.md",
+        "craft/doctrine/feedback-cycle.md"
+      ],
+      "conditional_docs": []
+    },
+    {
+      "id": "prompt-writing",
+      "description": "프롬프트 작성",
+      "match": {
+        "tags": [
+          "prompt-writing"
+        ]
+      },
+      "read_order": [
+        "library/prompts/README.md",
+        "library/prompts/scene-planning.md"
+      ],
+      "conditional_docs": []
+    },
+    {
+      "id": "local-run",
+      "description": "로컬 실행",
+      "match": {
+        "tags": [
+          "local-run"
+        ]
+      },
+      "read_order": [
+        "docs/runbooks/local-generation.md"
+      ],
+      "conditional_docs": []
+    },
+    {
+      "id": "paid-generation",
+      "description": "유료 생성",
+      "match": {
+        "tags": [
+          "paid-generation"
+        ]
+      },
+      "read_order": [
+        "docs/runbooks/paid-generation.md"
+      ],
+      "conditional_docs": []
+    },
+    {
+      "id": "resume-project",
+      "description": "작품 재개",
+      "match": {
+        "tags": [
+          "resume-project"
+        ]
+      },
+      "read_order": [],
+      "conditional_docs": [
+        {
+          "description": "지정 작품의 가까운 상태와 브리프",
+          "when": "path-provided",
+          "nearest": [
+            "생성상태.md",
+            "BRIEF.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review-delivery",
+      "description": "검수와 전달",
+      "match": {
+        "tags": [
+          "review-delivery"
+        ]
+      },
+      "read_order": [
+        "docs/runbooks/review-delivery.md"
+      ],
+      "conditional_docs": []
+    }
+  ]
+}
