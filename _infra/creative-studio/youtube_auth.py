@@ -104,6 +104,7 @@ def request_json(endpoint, params=None, bearer=None, form=None):
     allowed = ('https://oauth2.googleapis.com/token',
                'https://www.googleapis.com/youtube/v3/channels',
                'https://www.googleapis.com/youtube/v3/videos',
+               'https://www.googleapis.com/youtube/v3/commentThreads',
                'https://youtubeanalytics.googleapis.com/v2/reports')
     if endpoint not in allowed:
         raise ValueError('지원하지 않는 Google API입니다.')

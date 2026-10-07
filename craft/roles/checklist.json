@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "note": "역할별 점검표 기본본. 스튜디오 '역할 점검' 패널과 _infra/creative-studio/role_review.py가 읽는다. 작품·채널에 맞게 항목 문구를 고쳐 쓴다. 역할 문서(doc)는 각 저장소에서 작성한다.",
+  "roles": [
+    {
+      "id": "shorts-planner",
+      "label": "기획 작가",
+      "doc": "craft/roles/shorts-planner.md"
+    },
+    {
+      "id": "ai-video-director",
+      "label": "AI 영상 기술자",
+      "doc": "craft/roles/ai-video-director.md"
+    },
+    {
+      "id": "editor",
+      "label": "편집자",
+      "doc": "craft/roles/editor.md"
+    },
+    {
+      "id": "sound",
+      "label": "사운드",
+      "doc": "craft/roles/sound.md"
+    },
+    {
+      "id": "channel-operator",
+      "label": "채널 운영자",
+      "doc": "craft/roles/channel-operator.md"
+    }
+  ],
+  "stages": [
+    {
+      "id": "planning",
+      "label": "기획·대본"
+    },
+    {
+      "id": "storyboard",
+      "label": "콘티"
+    },
+    {
+      "id": "generation",
+      "label": "영상 생성"
+    },
+    {
+      "id": "review",
+      "label": "편집·검수"
+    },
+    {
+      "id": "publish",
+      "label": "게시"
+    }
+  ],
+  "items": [
+    {
+      "id": "plan-first-second",
+      "stage": "planning",
+      "role": "shorts-planner",
+      "text": "첫 1초: 밝은 화면, 얼굴 크게, 강한 표정. 소리 없이도 무슨 상황인지 보인다"
+    },
+    {
+      "id": "plan-different",
+      "stage": "planning",
+      "role": "channel-operator",
+      "text": "최근 편과 상황·결말 중 하나 이상(가능하면 둘 다) 다르다"
+    },
+    {
+      "id": "plan-ending",
+      "stage": "planning",
+      "role": "shorts-planner",
+      "text": "끝 처리는 반복 재생 고리 또는 다음 화 안내 중 하나만"
+    },
+    {
+      "id": "plan-anchors",
+      "stage": "planning",
+      "role": "shorts-planner",
+      "text": "다섯 닻(감정·모티프·중심 소품·깨지는 순간·마지막 그림)이 정해졌다"
+    },
+    {
+      "id": "plan-variable",
+      "stage": "planning",
+      "role": "channel-operator",
+      "text": "이번 편 실험 변수 하나가 BRIEF에 적혀 있다"
+    },
+    {
+      "id": "board-one-moment",
+      "stage": "storyboard",
+      "role": "ai-video-director",
+      "text": "컷마다 한 순간만 담았다(여러 사건은 컷을 나눔)"
+    },
+    {
+      "id": "board-two-faces",
+      "stage": "storyboard",
+      "role": "ai-video-director",
+      "text": "한 화면에 두 인물 얼굴이 함께 나오지 않는다"
+    },
+    {
+      "id": "board-props-fixed",
+      "stage": "storyboard",
+      "role": "ai-video-director",
+      "text": "소품 개수·크기가 정해져 있고, 결과가 생기기 전(원인 전) 상태로 그려졌다"
+    },
+    {
+      "id": "board-anatomy",
+      "stage": "storyboard",
+      "role": "ai-video-director",
+      "text": "콘티 손·팔·손가락 개수가 정상이다"
+    },
+    {
+      "id": "gen-prompt-continuity",
+      "stage": "generation",
+      "role": "ai-video-director",
+      "text": "프롬프트에 소품 개수·크기 고정, 손 음식은 '처음부터 있던 N개만', 원인→결과 초 단위, Ends on을 적었다"
+    },
+    {
+      "id": "gen-dialogue-asr",
+      "stage": "generation",
+      "role": "sound",
+      "text": "대사 컷 ASR이 대본과 일치한다"
+    },
+    {
+      "id": "gen-stray-speech",
+      "stage": "generation",
+      "role": "sound",
+      "text": "무대사 컷에 엉뚱한 말소리가 없다(있으면 편집에서 제거 표시)"
+    },
+    {
+      "id": "gen-face-match",
+      "stage": "generation",
+      "role": "ai-video-director",
+      "text": "얼굴이 인물 시트와 같은 사람으로 보인다"
+    },
+    {
+      "id": "rev-anatomy",
+      "stage": "review",
+      "role": "editor",
+      "text": "0.25초 간격 큰 화면으로 손·팔·손가락 개수가 정상이다"
+    },
+    {
+      "id": "rev-props-size-count",
+      "stage": "review",
+      "role": "ai-video-director",
+      "text": "물건이 점점 커지거나 개수가 늘어나지 않는다"
+    },
+    {
+      "id": "rev-cause-effect",
+      "stage": "review",
+      "role": "ai-video-director",
+      "text": "결과가 원인보다 먼저 나타나지 않는다"
+    },
+    {
+      "id": "rev-food-from-hands",
+      "stage": "review",
+      "role": "ai-video-director",
+      "text": "손에서 음식·물건이 새로 생기지 않고, 음식이 접히거나 녹지 않는다"
+    },
+    {
+      "id": "rev-first-second",
+      "stage": "review",
+      "role": "editor",
+      "text": "소리를 끄고 봐도 첫 1초가 기획대로 읽힌다"
+    },
+    {
+      "id": "rev-cards",
+      "stage": "review",
+      "role": "editor",
+      "text": "카드·자막 글씨가 휴대전화에서 읽힐 만큼 크고 가리는 곳이 없다"
+    },
+    {
+      "id": "rev-key-sound",
+      "stage": "review",
+      "role": "sound",
+      "text": "핵심 소리(먹기·펑 등) 구간이 충분히 크다(평균 -18dB 이상 또는 효과음 보강)"
+    },
+    {
+      "id": "rev-loudness",
+      "stage": "review",
+      "role": "sound",
+      "text": "마감 음량 -14 LUFS 안팎, 트루피크 -1 dBTP 이하"
+    },
+    {
+      "id": "pub-metadata",
+      "stage": "publish",
+      "role": "channel-operator",
+      "text": "제목·설명·AI 고지·음악 출처·안전 문구가 들어갔다"
+    },
+    {
+      "id": "pub-localization",
+      "stage": "publish",
+      "role": "channel-operator",
+      "text": "대상 언어별 제목·설명·자막을 올렸다"
+    },
+    {
+      "id": "pub-comment-link",
+      "stage": "publish",
+      "role": "channel-operator",
+      "text": "고정 댓글 문구와 관련 동영상 연결이 정해졌다"
+    },
+    {
+      "id": "pub-user-ok",
+      "stage": "publish",
+      "role": "channel-operator",
+      "text": "사용자가 최종본을 확인했다"
+    }
+  ]
+}

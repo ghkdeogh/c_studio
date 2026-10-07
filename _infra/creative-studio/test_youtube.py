@@ -17,7 +17,7 @@ import server
 import youtube_analytics as yt
 import youtube_auth as auth
 
-VID = 'aaaaaaaaaaa'  # Synthetic fixture; no real account access.
+VID = 'j9Sb9LsXcrU'
 CHANNEL = 'UC' + 'a' * 22
 
 

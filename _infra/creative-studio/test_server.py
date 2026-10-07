@@ -47,5 +47,21 @@ class StudioTest(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError):urllib.request.urlopen(urllib.request.Request(self.base+'/api/edit',data=b'{}'))
         with self.assertRaises(urllib.error.HTTPError):self.edit(action='upload',name='x.jpg',bytes=base64.b64encode(b'not image').decode())
         self.assertFalse((self.p/'.studio/state.json').exists())
+    def test_role_review_endpoints(self):
+        pid='productions/video/demo';q='/api/role-review?project='+pid
+        v=json.load(self.request(q));self.assertEqual(v['revision'],0);self.assertTrue(v['items']);self.assertTrue(all(i['status']=='pending' for i in v['items']))
+        self.assertEqual(json.load(self.request('/api/project?id='+pid))['role_review_revision'],0)
+        item=v['items'][0]['id'];body={'project':pid,'item':item,'status':'pass','note':' 확인 ','by':'editor','revision':0}
+        with self.assertRaises(urllib.error.HTTPError) as ctx:urllib.request.urlopen(urllib.request.Request(self.base+'/api/role-review',data=json.dumps(body).encode()))
+        self.assertEqual(ctx.exception.code,403);self.assertFalse((self.p/'role-review.json').exists())
+        v=json.load(self.request('/api/role-review',body));row=next(i for i in v['items'] if i['id']==item)
+        self.assertEqual((v['revision'],row['status'],row['note'],row['by']),(1,'pass','확인','editor'))
+        self.assertEqual(json.load(self.request('/api/project?id='+pid))['role_review_revision'],1)
+        for bad in [dict(body,revision=0),dict(body,revision=1,status='done'),dict(body,revision=1,item='nope'),dict(body,revision='1'),dict(body,revision=1,note=['x']),{k:x for k,x in body.items() if k!='revision'},dict(body,revision=1,project='../outside')]:
+            with self.assertRaises(urllib.error.HTTPError) as ctx:self.request('/api/role-review',bad)
+            self.assertEqual(ctx.exception.code,400);self.assertIn('error',json.load(ctx.exception))
+        self.assertEqual(json.loads((self.p/'role-review.json').read_text(encoding='utf-8'))['revision'],1)
+        with self.assertRaises(urllib.error.HTTPError):self.request('/api/role-review?project=../outside')
+        with self.request('/roles.js') as r:self.assertIn('renderRoleReview',r.read().decode('utf-8'))
 
 if __name__=='__main__':unittest.main()

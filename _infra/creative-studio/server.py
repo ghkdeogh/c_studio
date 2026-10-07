@@ -10,6 +10,8 @@ import production_assets
 import lesson_memory
 import youtube_analytics
 import youtube_auth
+import production_ledger
+import role_review
 import html
 
 HERE = Path(__file__).resolve().parent
@@ -62,7 +64,7 @@ def catalog(pid):
     elif not rows:
         rows = [{'id': x.parent.name, 'name': x.parent.name, 'local_path': str(x.relative_to(p)), 'duration': None, 'start': None} for x in sorted((p/'shots').glob('**/result.mp4'))]
     story = load_story(p,contract)
-    st = state(p); cuts = []
+    st = state(p); cuts = []; ledger_versions = {}
     manifest = read_json(p / 'shots/full-pass-h3-v1/manifest.json', {})
     jobs = {s['id']: s for s in manifest.get('shots', [])}
     for row in rows:
@@ -78,6 +80,9 @@ def catalog(pid):
         original_image = url(pid,row['input_image']) if row.get('input_image') else None
         planned_start=url(pid,row['planned_start_image']) if row.get('planned_start_image') else None
         planned_end=url(pid,row['planned_end_image']) if row.get('planned_end_image') else None
+        images,videos=production_ledger.cut_versions(p,cid); ledger_versions[cid]=(images,videos)
+        image_versions=[dict(v,url=url(pid,v['path']),adopted=v['path']==row.get('planned_start_image')) for v in images]
+        video_versions=[dict(v,url=url(pid,v['path']),first_frame_url=url(pid,v['first_frame']) if v['first_frame'] else None,end_frame_url=url(pid,v['end_frame']) if v['end_frame'] else None,contact_url=url(pid,v['contact_sheet']) if v['contact_sheet'] else None,adopted=v['path']==row.get('local_path')) for v in videos]
         cuts.append({'id':cid, 'name':row['name'], 'duration':row.get('duration'), 'start':row.get('start'),
                      'video':url(pid,row['local_path']) if video and video.is_file() else None, 'status':row.get('status','review'), 'original_image':original_image,
                      'end':url(pid,end.relative_to(p)) if end and end.is_file() else None,
@@ -87,7 +92,8 @@ def catalog(pid):
                      'planned_start':planned_start,'planned_end':planned_end,
                      'trim':entry.get('trim'),'trim_revision':entry.get('trim_revision',0),
                      'trim_stale':bool(entry.get('trim') and video and entry.get('trim_source_stamp')!=[video.stat().st_size,video.stat().st_mtime_ns]),
-                     'source_path':row.get('local_path'),
+                     'source_path':row.get('local_path'),'image_versions':image_versions,'video_versions':video_versions,
+                     'credits':next((v['credits'] for v in video_versions if v['adopted']),None),
                      'image':next((v['url'] for v in versions if v['id']==selected),planned_start or original_image)})
     library=[]
     for x in sorted(x for base in ('shots','references','assets/storyboard') for x in (p/base).glob('**/*')):
@@ -117,10 +123,17 @@ def catalog(pid):
         snapshot['source_file_url']=url(pid,source) if unchanged else None
         snapshot['source_warning']='등록한 원본이 없거나 변경되었습니다. 구간과 영상을 연결하기 전에 원본을 확인해 주세요.' if source and not unchanged else ''
     result['youtube_connection']=youtube_auth.status()
+    result['ledger']=production_ledger.summary(p,rows,ledger_versions,production_ledger.credits(ROOT).get('higgsfield'))
+    result['publications']=[dict(r,file_url=url(pid,r['file'])) for r in production_ledger.publications(p)]
+    channel_id=production_ledger.project_channel(p) or (result['youtube_connection'].get('channel') or {}).get('id')
+    result['channel']=production_ledger.channel(ROOT,projects(),channel_id)
     result['lesson_selection']=lesson_memory.select(ROOT,pid) if pid else None
     result['lessons']=result['lesson_selection']['items'] if pid else []
     guide=HERE.parents[1]/'library/prompts/scene-planning.md'
     result['prompt_guide']=guide.read_text(encoding='utf-8-sig') if guide.is_file() else ''
+    # Only the revision: CLI/other-window checks change the project revision so the panel reloads on the 3 s sync.
+    try:result['role_review_revision']=role_review.load(p)['revision']
+    except (ValueError,OSError):result['role_review_revision']=None
     result['revision']=hashlib.sha256(json.dumps(result,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     return result
 
@@ -189,6 +202,26 @@ def mutate(data):
     save_state(p,st)
     return {'ok':True}
 
+def adopt_version(data):
+    p=project(data['project']);cid=data['cut']
+    cut=next((c for c in catalog(data['project'])['cuts'] if c['id']==cid),None)
+    if not cut:raise ValueError('없는 컷입니다.')
+    previous=cut['source_path'] if data.get('kind')=='video' else next((v['path'] for v in cut['image_versions'] if v['adopted']),None)
+    row=production_ledger.adopt(p,cid,data.get('kind'),data.get('version'))
+    within(p,'.studio');st=state(p)
+    st.setdefault('adoptions',[]).append({'at':production_ledger.datetime.now(production_ledger.timezone.utc).astimezone().isoformat(timespec='seconds'),'cut':cid,'kind':data['kind'],'version':data['version'],'previous':previous})
+    save_state(p,st)
+    return {'ok':True,'cut':row}
+
+def save_role_check(data):
+    folder=project(data['project'])
+    if 'revision' not in data:raise ValueError('다시 열어 최신 점검표를 불러와 주세요.')
+    revision=data['revision']
+    if not isinstance(revision,int) or isinstance(revision,bool):raise ValueError('점검표 버전이 올바르지 않습니다. 새로고침해 주세요.')
+    item,status,note,by=data['item'],data['status'],data.get('note',''),data.get('by','')
+    if not all(isinstance(v,str) for v in (item,status,note,by)):raise ValueError('점검 항목·상태·메모는 글자로 보내 주세요.')
+    return role_review.set_check(folder,item,status,note.strip(),by.strip(),revision)
+
 def open_output_folder(data):
     p=project(data['project'])
     relative=data['path']
@@ -235,6 +268,9 @@ class Handler(BaseHTTPRequestHandler):
                 with LOCK:
                     result=lesson_memory.select(ROOT,params.get('project',[None])[0],params.get('query',[''])[0],params.get('stage',['planning'])[0],params.get('model',[''])[0],int(params.get('limit',['6'])[0]),int(params.get('offset',['0'])[0]),params.get('browse',['0'])[0]=='1')
                 return self.json(result)
+            if q.path=='/api/role-review':
+                with LOCK: result=role_review.view(project(params['project'][0]))
+                return self.json(result)
             if q.path in ('/api/frames','/api/frame-image'):
                 p=project(params['project'][0]);f=within(p,params['path'][0])
                 if f.suffix.lower()!='.mp4':raise ValueError('MP4 영상을 선택해 주세요.')
@@ -244,7 +280,7 @@ class Handler(BaseHTTPRequestHandler):
                 with LOCK: f=within(project(params['project'][0]),params['path'][0])
                 if f.suffix.lower() not in IMAGES|{'.mp4','.md','.mp3','.wav','.json'}: raise ValueError('지원하지 않는 파일 형식입니다.')
                 return self.file(f)
-            if q.path in ('/','/app.js','/story.js','/review.js','/youtube.js','/lessons.js','/style.css'): return self.file(HERE/'web'/('index.html' if q.path=='/' else q.path[1:]))
+            if q.path in ('/','/app.js','/story.js','/review.js','/youtube.js','/lessons.js','/status.js','/roles.js','/style.css'): return self.file(HERE/'web'/('index.html' if q.path=='/' else q.path[1:]))
             self.json({'error':'Not found'},404)
         except (ValueError,KeyError,OSError) as e: self.json({'error':str(e)},400)
     def do_POST(self):
@@ -270,7 +306,10 @@ class Handler(BaseHTTPRequestHandler):
                 elif self.path=='/api/timeline':result=save_timeline(data)
                 elif self.path=='/api/export':result=export_project(data)
                 elif self.path=='/api/open-output-folder':result=open_output_folder(data)
+                elif self.path=='/api/adopt':result=adopt_version(data)
+                elif self.path=='/api/credits':result=production_ledger.save_credits(ROOT,data)
                 elif self.path=='/api/lesson-plan':result=lesson_memory.save_plan(ROOT,data['project'],data)
+                elif self.path=='/api/role-review':result=save_role_check(data)
                 elif self.path=='/api/youtube/configure':result=youtube_auth.configure(data.get('document'))
                 elif self.path=='/api/youtube/oauth/start':result=youtube_auth.start(self.server.server_port)
                 elif self.path=='/api/youtube/link':result=youtube_analytics.link(project(data['project']),data['item'],data.get('revision'))
